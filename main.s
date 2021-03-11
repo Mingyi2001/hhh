@@ -46,7 +46,7 @@ SYSCTL_RCGCGPIO_R  EQU 0x400FE608
        THUMB
        AREA    DATA, ALIGN=2
 ;global variables go here
-
+PE2  EQU 0x4002410
 
        AREA    |.text|, CODE, READONLY, ALIGN=2
        THUMB
@@ -119,18 +119,19 @@ Start
 	  MOV R11,#1100
 ; test for PE2
 loop_1
-	LDR R1,[R2]
-	;MOV R1,#0x04 ;PE2=1
-	LDR R1,[R2]
+	LDR R0,[R2]
+;	LDR R0,=GPIO_PORTE_DATA_R
+	MOV R1,#0x04 ;PE2=1
+	;LDR R0,[R1]
 loop_11	
-	EOR R1,R1,#0x04 ;
 	STR R1,[R2] 
+	EOR R1,R1,#0x04 ;
 ;wait
 ;	MOV R0,#10000
 ;test
 ;	SUB R0,R0,#1
 ;	BNE test
-	B loop_1
+	B loop_11
 	
 
 
