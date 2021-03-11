@@ -98,167 +98,30 @@ Start
 	 LDR R1, [R0]
 	 ORR R1, #0x06
 	 STR R1, [R0]   
+   
+   CPSIE  I    ; TExaS voltmeter, scope runs on interrupts
+	  ; load address for PE2 into R2(OUTPUT) PF2
+	  LDR R2,=GPIO_PORTE_DATA_R
+	  ; load address for PE3 into R3(INPUT) FOR PF1
+	  LDR R3,=GPIO_PORTE_DATA_R
+	  ; load address for PF4 into R4
+	  LDR R4,=GPIO_PORTF_DATA_R
+	  ; move 0 into R8 to start program with button unpressed
+	  MOV R8,#0
+	  ; move 30 into R10 to store duty cycle percentage, initialy 2hz 30%
+	  MOV R10,#300
+	  MOV R11,#1100
 
-     CPSIE  I    ; TExaS voltmeter, scope runs on interrupts
-
-	 MOV R3, #50 ;CENTISECODNS CONSTANT
-	 MOV R2, #3  ;pERCENT COUNTER
-	 MOV R4, #0  ;PREVIOUS VALUE
-	 MOV R7, #10 ;MODULO VALUE
+loop_1
+	LDR R1,[R4]
+	MOV R1,#0x10
+loop_11
+	STR R1,[R4]
+	EOR R1,R1,#0x10 ;
+;	STR R1,[R4]
+	B loop_11
 	
-loop  
-; main engine goes here
-	 LDR R0, =GPIO_PORTE_DATA_R
-	 LDR R8, [R0]
-	 
-	 MUL R5, R2, R3 
-	 ORR R8, R8, #0x04  ; BIT 2
-	 STR R8, [R0]
-	 BL delay
-	 LDR R8, [R0] 
-	 AND R8, R8, #0xFB
-	 STR R8, [R0]
-	 ADD R5, R2, #-10
-	 ;EOR R5, #0xFFFFFFFF
-	 BIC R5,R5,#0xFFFFFFFF
-	 ADD R5, R5, #1
-	 MUL R5, R3, R5
-	 BL delay
-	 AND R1, R8, #0x02
-	 LSR R1, R1, #1
-	 MOV R9, R1
-	 EOR R1, R1, R4
-	 AND R1, R1, R4
-	 MOV R4, R9
-	 ADDS R1, R1, #0
-	 BNE INCREMENT
-	 
-     LDR R12, =GPIO_PORTF_DATA_R
-     LDR R12, [R12]
-     ;LSR R0, #4
-     AND R12, #0x10
-     ADDS R12, R12, #0
-  
-     BEQ Breathe
 
-     B    loop
-INCREMENT
-	 ADD R2, R2, #2
-	 UDIV R6, R2, R7
-	 MLS R2, R6, R7, R2
-	 BX LR
-	 
 
-delay ;Delays for parameter 1 ms
-  PUSH {R1, R5}
-  MOV R1, #5333
-  MUL R5, R5, R1
-wait
-  SUBS R5, R5, #1
-  LDR R8, [R0]
-  AND R1, R8, #2
-  LSR R1, R1, #1
-  MOV R9, R1
-  EOR R1, R1, R4
-  AND R1, R1, R4
-  MOV R4, R9
-  ADDS R1, R1, #0
-  
-  BNE INCREMENT
-  
-  ADDS R5, R5, #0
-  BNE  wait
-  POP {R1, R5}
-  
-  BX LR
-  
-Breathe
-  ;R5: address of port
-  ;R1: duty cycle
-  ;R3: cycle counter
-  ;R4: flag for incimenting vs decrementing
-  PUSH {R0, R1, R3, R5, R7, R11}
-  MOV R5, R2
-  MOV R3, #1
-  MOV R11, #1
-bLoop
-  
-  MOV R1, R5
-  
-  
-  PUSH {R14, R12}
-  LDR R7, =GPIO_PORTE_DATA_R
-  LDR R12, [R7]
-  ORR R12, R12, #0x04
-  STR R12, [R7]
-  
-  BL delayUS
-  MOV R5, R1
-  AND R12, R12, #0xFB
-  STR R12, [R7]
-  EOR R5, R1, #0xFFFFFFFF
-  ADD R5, R5, #101
-  
-  
-  BL delayUS
-  
-  MOV R5, R1
-  
-  POP {R14, R12}
-  
-  SUBS R3, R3, #1
-  BNE bLoop
-  MOV R3, #1 ;speed 
-  ADDS R5, R11, R5
-  BEQ ifZero
-  SUBS R12, R5, #100
-  BEQ ifHundred
-  B neither
-ifZero
-  MOV R11, #1
-  ADD R5, R5, #1
-  B neither
-ifHundred
-  MOV R11, #-1
-  SUB R5, R5, #1
-neither
-  
-  
-  LDR R1, =GPIO_PORTF_DATA_R
-  LDR R1, [R1]
-  ;LSR R0, #4
-  AND R1, #0x10
-  ADDS R1, R1, #0
-  
-  BEQ bLoop
-  
-  POP {R0, R1, R3, R5, R6, R11}
-  BX LR
-  
-delayUS ;Delays for parameter 1 microseconds
-  
-  PUSH {R1, R5}
-  MOV R1, #533
-  MUL R5, R5, R1
-waitUS
-  SUBS R5, R5, #0x01
-  LDR R8, [R0]
-  AND R1, R8, #0x02
-  LSR R1, R1, #1
-  MOV R9, R1
-  EOR R1, R1, R4
-  AND R1, R1, R4
-  MOV R4, R9
-  ADDS R1, R1, #0
-  
-  BNE INCREMENT
-  
-  ADDS R5, R5, #0
-  BNE  waitUS
-  POP {R1, R5}
-  
-  BX LR
-  
-      
-     ALIGN      ; make sure the end of this section is aligned
-     END        ; end of file
+    ALIGN      ; make sure the end of this section is aligned
+	END        ; end of file
