@@ -58,7 +58,7 @@ Start
      BL  TExaS_Init
 ; voltmeter, scope on PD3
  ; Initialization goes here
-     LDR R0, =SYSCTL_RCGCGPIO_R ; activate the clock for port D
+     LDR R0, =SYSCTL_RCGCGPIO_R ; activate the clock for port F,E
 	 LDRB R1, [R0]
 	 ORR R1, #0x30 ; set bit 7 to turn on the clock
 	 STRB R1, [R0]
@@ -68,35 +68,41 @@ Start
 	 LDR R0, =GPIO_PORTF_LOCK_R ;unlock the lock register
 	 LDR R1, =GPIO_LOCK_KEY
 	 STR R1, [R0]
-	 LDR R0, =GPIO_PORTF_CR_R ;
-	 LDR R1, [R0]
-	 ORR R1, #0xFF 
-	 STR R1, [R0]
 	 
-	 LDR R0, =GPIO_PORTF_DIR_R ; set direction register
+	 LDR R0, =GPIO_PORTF_CR_R ;enable the commit for port F
 	 LDR R1, [R0]
-	 AND R1, #0xFF ; PF0-PF7 outputs
+	 MOV R1, #0xFF ; value 1
 	 STR R1, [R0]
-	 
-	 LDR R0, =GPIO_PORTF_DEN_R ; enable port F digital port
+	 LDR R0, =GPIO_PORTF_DIR_R ; set input on PF4
 	 LDR R1, [R0]
-	 ORR R1, #0x10 ; digital enable PF1,PF3
+	 ;ORR R1, #0x10 ; PF4 output
+	 MOV R1,#0xEF ;PF4 INPUT
 	 STR R1, [R0]
-	 
-	 LDR R0, =GPIO_PORTF_PUR_R ; pull-up resistors for PE4
+	 LDR R0, =GPIO_PORTF_DEN_R ; digtial enable PF4
 	 LDR R1, [R0]
-	 ORR R1, #0x10 ;
+	; MOV R1, #0x10 ; digital enable PF4
+	 MOV R1, #0xFF
 	 STR R1, [R0]
-	 
-	 LDR R0, =GPIO_PORTE_DIR_R ; ret direction of registers
+	 LDR R0, =GPIO_PORTF_PUR_R ; pull-up resistors for PF4
 	 LDR R1, [R0]
-	 AND R1, #0xFD
-	 ORR R1, #0x04
+	 MOV R1, #0x10 ;
+	 STR R1, [R0]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
+;	 LDR R0,=GPIO_PORTE_CR_R
+;	 MOV R1, #0xFF
+;	 STR R1,[R0]
+
+	 LDR R0, =GPIO_PORTE_DIR_R ; Set direction of registers PE1 INPUT PE2 OUTPUT
+;	 LDR R1, [R0]
+;	 AND R1, #0xFD
+;	 ORR R1, #0x04
+	 MOV R1, #0x04 ; PE2 OUTPUT PE0-1,3-7 INPUT
 	 STR R1, [R0]
 	 
 	 LDR R0, =GPIO_PORTE_DEN_R ; enable port E digital port
 	 LDR R1, [R0]
-	 ORR R1, #0x06
+;	 ORR R1, #0x06
+	 MOV R1, #0xFF
 	 STR R1, [R0]   
    
    CPSIE  I    ; TExaS voltmeter, scope runs on interrupts
@@ -111,15 +117,20 @@ Start
 	  ; move 30 into R10 to store duty cycle percentage, initialy 2hz 30%
 	  MOV R10,#300
 	  MOV R11,#1100
-
+; test for PE2
 loop_1
-	LDR R1,[R4]
-	MOV R1,#0x10
-loop_11
-	STR R1,[R4]
-	EOR R1,R1,#0x10 ;
-;	STR R1,[R4]
-	B loop_11
+	LDR R1,[R2]
+	;MOV R1,#0x04 ;PE2=1
+	LDR R1,[R2]
+loop_11	
+	EOR R1,R1,#0x04 ;
+	STR R1,[R2] 
+;wait
+;	MOV R0,#10000
+;test
+;	SUB R0,R0,#1
+;	BNE test
+	B loop_1
 	
 
 
